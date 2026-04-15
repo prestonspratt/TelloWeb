@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DroneCode — Tello Visual Programmer</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0f14;
+    --surface: #161920;
+    --surface2: #1e222d;
+    --surface3: #252a38;
+    --border: rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.13);
+    --accent: #00e5a0;
+    --accent2: #00b87a;
+    --accent-dim: rgba(0,229,160,0.12);
+    --red: #ff4f4f;
+    --red-dim: rgba(255,79,79,0.12);
+    --blue: #4fa3ff;
+    --blue-dim: rgba(79,163,255,0.12);
+    --amber: #ffb84f;
+    --amber-dim: rgba(255,184,79,0.12);
+    --purple: #b84fff;
+    --purple-dim: rgba(184,79,255,0.12);
+    --text: #e8ecf5;
+    --text2: #8a92a8;
+    --text3: #545c72;
+    --mono: 'Space Mono', monospace;
+    --sans: 'DM Sans', sans-serif;
+    --r: 8px;
+    --r2: 12px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: var(--sans); height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
+
+  header { display: flex; align-items: center; gap: 16px; padding: 0 20px; height: 52px; background: var(--surface); border-bottom: 1px solid var(--border); flex-shrink: 0; z-index: 100; }
+  .logo { font-family: var(--mono); font-size: 15px; font-weight: 700; letter-spacing: 0.04em; color: var(--accent); display: flex; align-items: center; gap: 8px; }
+  .logo-icon { width: 28px; height: 28px; background: var(--accent-dim); border: 1px solid var(--accent); border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 16px; }
+  .header-spacer { flex: 1; }
+  .conn-pill { display: flex; align-items: center; gap: 8px; padding: 6px 14px; background: var(--surface2); border: 1px solid var(--border2); border-radius: 20px; font-size: 12px; font-family: var(--mono); cursor: pointer; transition: all 0.2s; }
+  .conn-pill:hover { border-color: var(--accent); }
+  .conn-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--text3); transition: background 0.3s; }
+  .conn-dot.connected { background: var(--accent); box-shadow: 0 0 6px var(--accent); }
+  .conn-dot.connecting { background: var(--amber); animation: pulse 1s infinite; }
+  .btn-run { display: flex; align-items: center; gap: 8px; padding: 8px 18px; background: var(--accent); color: #000; border: none; border-radius: var(--r); font-family: var(--sans); font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+  .btn-run:hover { background: #00ffb3; transform: translateY(-1px); }
+  .btn-run:active { transform: translateY(0); }
+  .btn-run:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+  .btn-clear { display: flex; align-items: center; gap: 6px; padding: 8px 14px; background: transparent; color: var(--text2); border: 1px solid var(--border2); border-radius: var(--r); font-family: var(--sans); font-size: 13px; cursor: pointer; transition: all 0.2s; }
+  .btn-clear:hover { border-color: var(--red); color: var(--red); }
+
+  .main { display: flex; flex: 1; overflow: hidden; }
+
+  .palette { width: 220px; background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; overflow-y: auto; flex-shrink: 0; }
+  .palette-section { padding: 12px; border-bottom: 1px solid var(--border); }
+  .palette-label { font-size: 10px; font-family: var(--mono); color: var(--text3); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 8px; }
+  .palette-block { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: var(--r); border: 1px solid transparent; cursor: grab; font-size: 13px; font-weight: 500; margin-bottom: 5px; transition: all 0.15s; user-select: none; }
+  .palette-block:active { cursor: grabbing; transform: scale(0.97); }
+  .palette-block:hover { border-color: var(--border2); }
+  .block-icon { font-size: 16px; width: 22px; text-align: center; }
+  .pb-takeoff { background: var(--accent-dim); color: var(--accent); }
+  .pb-takeoff:hover { border-color: var(--accent); }
+  .pb-land { background: var(--red-dim); color: var(--red); }
+  .pb-land:hover { border-color: var(--red); }
+  .pb-move { background: var(--blue-dim); color: var(--blue); }
+  .pb-move:hover { border-color: var(--blue); }
+  .pb-rotate { background: var(--purple-dim); color: var(--purple); }
+  .pb-rotate:hover { border-color: var(--purple); }
+  .pb-hover { background: var(--amber-dim); color: var(--amber); }
+  .pb-hover:hover { border-color: var(--amber); }
+  .pb-return { background: rgba(255,255,255,0.06); color: var(--text2); }
+  .pb-return:hover { border-color: var(--border2); color: var(--text); }
+
+  .canvas-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+  .canvas-toolbar { display: flex; align-items: center; gap: 10px; padding: 8px 16px; border-bottom: 1px solid var(--border); background: var(--surface); font-size: 12px; color: var(--text3); font-family: var(--mono); }
+  .canvas { flex: 1; overflow-y: auto; padding: 20px; position: relative; }
+  .canvas-empty { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); text-align: center; color: var(--text3); pointer-events: none; }
+  .canvas-empty .big { font-size: 48px; margin-bottom: 12px; opacity: 0.4; }
+  .canvas-empty p { font-size: 13px; line-height: 1.6; }
+  .block-list { display: flex; flex-direction: column; gap: 6px; min-height: 100%; }
+
+  .prog-block { display: flex; align-items: center; gap: 12px; padding: 10px 14px; border-radius: var(--r); border: 1px solid var(--border); cursor: grab; position: relative; transition: all 0.15s; animation: blockIn 0.2s ease; background: var(--surface2); }
+  @keyframes blockIn { from { opacity:0; transform: translateX(-8px); } to { opacity:1; transform:none; } }
+  .prog-block:hover { border-color: var(--border2); }
+  .prog-block.dragging { opacity: 0.4; }
+  .prog-block.executing { border-color: var(--accent); box-shadow: 0 0 14px var(--accent-dim); }
+  .prog-block.done { opacity: 0.45; }
+  .prog-block.error { border-color: var(--red); box-shadow: 0 0 10px var(--red-dim); }
+  .block-num { font-family: var(--mono); font-size: 11px; color: var(--text3); width: 20px; text-align: right; flex-shrink: 0; }
+  .block-stripe { width: 3px; height: 32px; border-radius: 2px; flex-shrink: 0; }
+  .block-content { flex: 1; display: flex; flex-direction: column; gap: 5px; }
+  .block-title { font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+  .block-params { display: flex; gap: 8px; flex-wrap: wrap; }
+  .param-group { display: flex; align-items: center; gap: 5px; }
+  .param-label { font-size: 11px; color: var(--text3); font-family: var(--mono); text-transform: uppercase; letter-spacing: 0.05em; }
+  .param-input { background: var(--surface3); border: 1px solid var(--border); border-radius: 5px; padding: 3px 8px; font-size: 12px; font-family: var(--mono); color: var(--text); width: 72px; transition: border-color 0.15s; }
+  .param-input:focus { outline: none; border-color: var(--blue); }
+  .param-unit { font-size: 11px; color: var(--text3); font-family: var(--mono); }
+  .block-delete { width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; border: none; background: transparent; color: var(--text3); cursor: pointer; border-radius: 5px; font-size: 14px; opacity: 0; transition: all 0.15s; flex-shrink: 0; }
+  .prog-block:hover .block-delete { opacity: 1; }
+  .block-delete:hover { background: var(--red-dim); color: var(--red); }
+
+  .right-panel { width: 280px; background: var(--surface); border-left: 1px solid var(--border); display: flex; flex-direction: column; flex-shrink: 0; }
+  .panel-tabs { display: flex; border-bottom: 1px solid var(--border); }
+  .panel-tab { flex: 1; padding: 10px; text-align: center; font-size: 12px; font-family: var(--mono); color: var(--text3); cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.15s; }
+  .panel-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+  .panel-content { flex: 1; overflow-y: auto; padding: 16px; }
+
+  .preview-3d { width: 100%; aspect-ratio: 1; background: var(--surface2); border-radius: var(--r2); border: 1px solid var(--border); position: relative; overflow: hidden; margin-bottom: 12px; }
+  #flightCanvas { width: 100%; height: 100%; }
+  .preview-legend { display: flex; gap: 12px; flex-wrap: wrap; font-size: 11px; color: var(--text3); font-family: var(--mono); margin-bottom: 12px; }
+  .legend-item { display: flex; align-items: center; gap: 5px; }
+  .legend-dot { width: 8px; height: 8px; border-radius: 50%; }
+
+  .log-area { flex: 1; background: var(--surface2); border-radius: var(--r); border: 1px solid var(--border); padding: 10px; font-family: var(--mono); font-size: 11px; overflow-y: auto; min-height: 120px; max-height: 300px; }
+  .log-line { padding: 2px 0; line-height: 1.6; animation: logIn 0.2s ease; }
+  @keyframes logIn { from { opacity:0; } to { opacity:1; } }
+  .log-line.info { color: var(--text2); }
+  .log-line.success { color: var(--accent); }
+  .log-line.error { color: var(--red); }
+  .log-line.warn { color: var(--amber); }
+  .log-line.cmd { color: var(--blue); }
+  .log-time { color: var(--text3); margin-right: 6px; }
+
+  .drone-status { background: var(--surface2); border-radius: var(--r); border: 1px solid var(--border); padding: 12px; margin-bottom: 12px; }
+  .status-row { display: flex; justify-content: space-between; font-size: 12px; padding: 3px 0; }
+  .status-key { color: var(--text3); font-family: var(--mono); }
+  .status-val { color: var(--text); font-family: var(--mono); }
+  .status-val.green { color: var(--accent); }
+  .status-val.red { color: var(--red); }
+  .status-val.amber { color: var(--amber); }
+
+  .progress-bar { height: 3px; background: var(--surface3); border-radius: 2px; overflow: hidden; margin-top: 4px; }
+  .progress-fill { height: 100%; background: var(--accent); border-radius: 2px; transition: width 0.3s ease; width: 0%; }
+
+  @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.4; } }
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--surface3); border-radius: 2px; }
+
+  /* MODAL */
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.75); display: flex; align-items: center; justify-content: center; z-index: 1000; backdrop-filter: blur(6px); }
+  .modal-overlay.hidden { display: none; }
+  .modal { background: var(--surface); border: 1px solid var(--border2); border-radius: var(--r2); padding: 28px; width: 420px; animation: modalIn 0.2s ease; max-height: 90vh; overflow-y: auto; }
+  @keyframes modalIn { from { opacity:0; transform:scale(0.95); } to { opacity:1; transform:none; } }
+  .modal h2 { font-size: 17px; font-weight: 600; margin-bottom: 6px; display: flex; align-items: center; gap: 10px; }
+  .modal p { font-size: 13px; color: var(--text2); margin-bottom: 16px; line-height: 1.6; }
+  .modal-field { margin-bottom: 14px; }
+  .modal-field label { display: block; font-size: 11px; font-family: var(--mono); color: var(--text3); margin-bottom: 6px; letter-spacing: 0.08em; text-transform: uppercase; }
+  .modal-input { width: 100%; background: var(--surface2); border: 1px solid var(--border2); border-radius: var(--r); padding: 10px 12px; font-size: 13px; font-family: var(--mono); color: var(--text); transition: border-color 0.15s; }
+  .modal-input:focus { outline: none; border-color: var(--accent); }
+  .modal-actions { display: flex; gap: 10px; margin-top: 20px; }
+  .btn-primary { flex: 1; padding: 10px; background: var(--accent); color: #000; border: none; border-radius: var(--r); font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+  .btn-primary:hover { background: #00ffb3; }
+  .btn-secondary { padding: 10px 16px; background: transparent; color: var(--text2); border: 1px solid var(--border2); border-radius: var(--r); font-size: 14px; cursor: pointer; transition: all 0.2s; }
+  .btn-secondary:hover { color: var(--text); }
+
+  .guide-step { display: flex; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+  .guide-step:last-child { border-bottom: none; }
+  .guide-num { width: 22px; height: 22px; border-radius: 50%; background: var(--accent-dim); color: var(--accent); font-size: 12px; font-family: var(--mono); font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; }
+  .guide-text { font-size: 12px; color: var(--text2); line-height: 1.6; }
+  .guide-text strong { color: var(--text); }
+  .guide-text code { background: var(--surface3); padding: 1px 5px; border-radius: 3px; font-family: var(--mono); font-size: 11px; color: var(--accent); }
+
+  .alert-box { border-radius: var(--r); padding: 10px 12px; font-size: 12px; margin: 10px 0; line-height: 1.6; }
+  .alert-amber { background: var(--amber-dim); border: 1px solid rgba(255,184,79,0.3); color: var(--amber); }
+  .alert-red { background: var(--red-dim); border: 1px solid rgba(255,79,79,0.3); color: var(--red); }
+  .alert-green { background: var(--accent-dim); border: 1px solid rgba(0,229,160,0.3); color: var(--accent); }
+  .alert-blue { background: var(--blue-dim); border: 1px solid rgba(79,163,255,0.3); color: var(--blue); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo"><div class="logo-icon">🚁</div>DRONECODE</div>
+  <span style="font-size:11px;color:var(--text3);font-family:var(--mono)">Tello Visual Programmer</span>
+  <div class="header-spacer"></div>
+  <div class="conn-pill" id="connPill" onclick="openModal()">
+    <div class="conn-dot" id="connDot"></div>
+    <span id="connLabel">Not Connected</span>
+  </div>
+  <button class="btn-clear" onclick="clearProgram()">✕ Clear</button>
+  <button class="btn-run" id="runBtn" onclick="runProgram()" disabled>▶ Run Mission</button>
+</header>
+
+<div class="main">
+  <!-- PALETTE -->
+  <div class="palette">
+    <div class="palette-section">
+      <div class="palette-label">Flight Control</div>
+      <div class="palette-block pb-takeoff" draggable="true" data-type="takeoff"><span class="block-icon">🛫</span> Takeoff</div>
+      <div class="palette-block pb-land" draggable="true" data-type="land"><span class="block-icon">🛬</span> Land</div>
+      <div class="palette-block pb-return" draggable="true" data-type="returnhome"><span class="block-icon">🏠</span> Return & Land</div>
+    </div>
+    <div class="palette-section">
+      <div class="palette-label">Movement</div>
+      <div class="palette-block pb-move" draggable="true" data-type="moveto"><span class="block-icon">📍</span> Move To XYZ</div>
+      <div class="palette-block pb-move" draggable="true" data-type="forward"><span class="block-icon">⬆️</span> Forward</div>
+      <div class="palette-block pb-move" draggable="true" data-type="back"><span class="block-icon">⬇️</span> Backward</div>
+      <div class="palette-block pb-move" draggable="true" data-type="left"><span class="block-icon">⬅️</span> Left</div>
+      <div class="palette-block pb-move" draggable="true" data-type="right"><span class="block-icon">➡️</span> Right</div>
+      <div class="palette-block pb-move" draggable="true" data-type="up"><span class="block-icon">🔼</span> Up</div>
+      <div class="palette-block pb-move" draggable="true" data-type="down"><span class="block-icon">🔽</span> Down</div>
+    </div>
+    <div class="palette-section">
+      <div class="palette-label">Rotation</div>
+      <div class="palette-block pb-rotate" draggable="true" data-type="cw"><span class="block-icon">↻</span> Rotate CW</div>
+      <div class="palette-block pb-rotate" draggable="true" data-type="ccw"><span class="block-icon">↺</span> Rotate CCW</div>
+    </div>
+    <div class="palette-section">
+      <div class="palette-label">Timing</div>
+      <div class="palette-block pb-hover" draggable="true" data-type="hover"><span class="block-icon">⏸</span> Hover / Wait</div>
+    </div>
+  </div>
+
+  <!-- CANVAS -->
+  <div class="canvas-area">
+    <div class="canvas-toolbar">
+      <span>PROGRAM</span>
+      <span style="color:var(--border2)">|</span>
+      <span id="blockCount">0 blocks</span>
+      <span style="color:var(--border2)">|</span>
+      <span id="estTime">~0s flight time</span>
+      <div style="flex:1"></div>
+      <span>drag to reorder</span>
+    </div>
+    <div class="canvas" id="canvas">
+      <div class="canvas-empty" id="emptyMsg">
+        <div class="big">🚁</div>
+        <p>Drag blocks from the left panel<br>to build your mission</p>
+      </div>
+      <div class="block-list" id="blockList"></div>
+    </div>
+    <div style="padding:8px 20px;border-top:1px solid var(--border);background:var(--surface);">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span style="font-size:11px;color:var(--text3);font-family:var(--mono)">MISSION PROGRESS</span>
+        <div class="progress-bar" style="flex:1;"><div class="progress-fill" id="progressBar"></div></div>
+        <span style="font-size:11px;color:var(--text2);font-family:var(--mono)" id="progressLabel">—</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT PANEL -->
+  <div class="right-panel">
+    <div class="panel-tabs">
+      <div class="panel-tab active" onclick="switchTab('preview',this)">Preview</div>
+      <div class="panel-tab" onclick="switchTab('status',this)">Console</div>
+      <div class="panel-tab" onclick="switchTab('code',this)">SDK Code</div>
+    </div>
+
+    <div class="panel-content" id="tab-preview">
+      <div class="preview-3d"><canvas id="flightCanvas"></canvas></div>
+      <div class="preview-legend">
+        <div class="legend-item"><div class="legend-dot" style="background:var(--accent)"></div>path</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--blue)"></div>waypoint</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--red)"></div>land</div>
+      </div>
+      <div class="drone-status">
+        <div class="status-row"><span class="status-key">position</span><span class="status-val" id="posVal">0, 0, 0 cm</span></div>
+        <div class="status-row"><span class="status-key">heading</span><span class="status-val" id="headingVal">0°</span></div>
+        <div class="status-row"><span class="status-key">altitude</span><span class="status-val" id="altVal">0 cm</span></div>
+        <div class="status-row"><span class="status-key">battery</span><span class="status-val green" id="batVal">—</span></div>
+        <div class="status-row"><span class="status-key">speed</span><span class="status-val" id="speedVal">— cm/s</span></div>
+        <div class="status-row"><span class="status-key">temp</span><span class="status-val" id="tempVal">— °C</span></div>
+        <div class="status-row"><span class="status-key">proxy</span><span class="status-val red" id="connStatusVal">disconnected</span></div>
+      </div>
+    </div>
+
+    <div class="panel-content" id="tab-status" style="display:none">
+      <div style="margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;">
+        <span style="font-size:11px;font-family:var(--mono);color:var(--text3)">CONSOLE LOG</span>
+        <button onclick="clearLog()" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:11px;font-family:var(--mono)">clear</button>
+      </div>
+      <div class="log-area" id="logArea"></div>
+    </div>
+
+    <div class="panel-content" id="tab-code" style="display:none">
+      <div style="margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;">
+        <span style="font-size:11px;font-family:var(--mono);color:var(--text3)">TELLO SDK 2.0</span>
+        <button onclick="copyCode()" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:11px;font-family:var(--mono)" id="copyBtn">copy</button>
+      </div>
+      <pre id="codeOutput" style="font-family:var(--mono);font-size:11px;color:var(--text2);line-height:1.8;white-space:pre-wrap;"></pre>
+    </div>
+  </div>
+</div>
+
+<!-- CONNECTION MODAL -->
+<div class="modal-overlay hidden" id="modalOverlay" onclick="closeModal(event)">
+  <div class="modal">
+    <h2>🛜 Connect to Tello Drone</h2>
+    <p>DroneCode connects via a local proxy running on your computer. Follow the steps below.</p>
+
+    <div style="margin-bottom:16px;">
+      <div class="guide-step">
+        <div class="guide-num">1</div>
+        <div class="guide-text">Power on your Tello. Wait for the LED to <strong>blink yellow</strong> rapidly.</div>
+      </div>
+      <div class="guide-step">
+        <div class="guide-num">2</div>
+        <div class="guide-text">On your computer, connect to WiFi: <strong>TELLO-XXXXXX</strong></div>
+      </div>
+      <div class="guide-step">
+        <div class="guide-num">3</div>
+        <div class="guide-text">Start the local proxy: run <code>start-windows.bat</code> or <code>./start-mac-linux.sh</code> from the <strong>server/</strong> folder you downloaded.</div>
+      </div>
+      <div class="guide-step">
+        <div class="guide-num">4</div>
+        <div class="guide-text">Enter your proxy address below. Default is <code>localhost:8080</code> if running on this computer.</div>
+      </div>
+    </div>
+
+    <div class="modal-field">
+      <label>Proxy WebSocket Address</label>
+      <input class="modal-input" id="proxyHost" value="localhost" placeholder="localhost or your IP">
+    </div>
+    <div class="modal-field">
+      <label>Proxy Port</label>
+      <input class="modal-input" id="proxyPort" value="8080" placeholder="8080">
+    </div>
+
+    <div class="alert-amber">
+      ⚠️ The proxy must be running on a computer connected to the Tello WiFi. Your browser connects to the proxy via WebSocket, which then relays UDP commands to the drone.
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="closeModalDirect()">Cancel</button>
+      <button class="btn-primary" onclick="connect()">Connect</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════
+// STATE
+// ══════════════════════════════════════
+let program = [];
+let ws = null;
+let connected = false;
+let running = false;
+let nextId = 1;
+let droneHeading = 0;
+let droneState = {};
+let pendingResolve = null;
+let reconnectTimer = null;
+
+const BLOCK_DEFS = {
+  takeoff:    { label:'Takeoff',       icon:'🛫', color:'var(--accent)',  stripe:'#00e5a0', params:[] },
+  land:       { label:'Land',          icon:'🛬', color:'var(--red)',     stripe:'#ff4f4f', params:[] },
+  returnhome: { label:'Return & Land', icon:'🏠', color:'var(--text2)',   stripe:'#8a92a8', params:[] },
+  moveto:     { label:'Move To',       icon:'📍', color:'var(--blue)',    stripe:'#4fa3ff', params:[
+    {key:'x',label:'X',unit:'cm',val:0,min:-500,max:500},
+    {key:'y',label:'Y',unit:'cm',val:0,min:-500,max:500},
+    {key:'z',label:'Z',unit:'cm',val:80,min:20,max:300}
+  ]},
+  forward:{ label:'Forward',  icon:'⬆️',color:'var(--blue)', stripe:'#4fa3ff',params:[{key:'d',label:'Dist',unit:'cm',val:50,min:20,max:500}]},
+  back:   { label:'Backward', icon:'⬇️',color:'var(--blue)', stripe:'#4fa3ff',params:[{key:'d',label:'Dist',unit:'cm',val:50,min:20,max:500}]},
+  left:   { label:'Left',     icon:'⬅️',color:'var(--blue)', stripe:'#4fa3ff',params:[{key:'d',label:'Dist',unit:'cm',val:50,min:20,max:500}]},
+  right:  { label:'Right',    icon:'➡️',color:'var(--blue)', stripe:'#4fa3ff',params:[{key:'d',label:'Dist',unit:'cm',val:50,min:20,max:500}]},
+  up:     { label:'Up',       icon:'🔼',color:'var(--blue)', stripe:'#4fa3ff',params:[{key:'d',label:'Dist',unit:'cm',val:50,min:20,max:500}]},
+  down:   { label:'Down',     icon:'🔽',color:'var(--blue)', stripe:'#4fa3ff',params:[{key:'d',label:'Dist',unit:'cm',val:50,min:20,max:500}]},
+  cw:     { label:'Rotate CW', icon:'↻',color:'var(--purple)',stripe:'#b84fff',params:[{key:'deg',label:'Deg',unit:'°',val:90,min:1,max:360}]},
+  ccw:    { label:'Rotate CCW',icon:'↺',color:'var(--purple)',stripe:'#b84fff',params:[{key:'deg',label:'Deg',unit:'°',val:90,min:1,max:360}]},
+  hover:  { label:'Hover',    icon:'⏸',color:'var(--amber)', stripe:'#ffb84f',params:[{key:'t',label:'Time',unit:'s',val:2,min:1,max:60}]},
+};
+
+// ══════════════════════════════════════
+// INIT
+// ══════════════════════════════════════
+document.addEventListener('DOMContentLoaded', () => {
+  initDragFromPalette();
+  initCanvasDrop();
+  drawFlightPreview();
+  log('info', 'DroneCode ready. Click "Not Connected" to connect.');
+});
+
+// ══════════════════════════════════════
+// WEBSOCKET CONNECTION
+// ══════════════════════════════════════
+function openModal() { document.getElementById('modalOverlay').classList.remove('hidden'); }
+function closeModalDirect() { document.getElementById('modalOverlay').classList.add('hidden'); }
+function closeModal(e) { if (e.target === document.getElementById('modalOverlay')) closeModalDirect(); }
+
+function connect() {
+  const host = document.getElementById('proxyHost').value.trim() || 'localhost';
+  const port = document.getElementById('proxyPort').value.trim() || '8080';
+  closeModalDirect();
+
+  setConnState('connecting', `Connecting...`);
+  log('info', `Connecting to proxy ws://${host}:${port}...`);
+
+  try {
+    ws = new WebSocket(`ws://${host}:${port}`);
+  } catch(e) {
+    log('error', `Failed to create WebSocket: ${e.message}`);
+    setConnState('disconnected', 'Not Connected');
+    return;
+  }
+
+  ws.onopen = () => {
+    log('success', `WebSocket connected to proxy at ${host}:${port}`);
+    setConnState('connected', `${host}:${port}`);
+    connected = true;
+    document.getElementById('connStatusVal').textContent = 'online';
+    document.getElementById('connStatusVal').className = 'status-val green';
+    document.getElementById('runBtn').disabled = program.length === 0;
+  };
+
+  ws.onmessage = (evt) => {
+    let msg;
+    try { msg = JSON.parse(evt.data); } catch { return; }
+
+    if (msg.type === 'response') {
+      log('success', `← Tello: ${msg.data}`);
+      if (pendingResolve) { pendingResolve(msg.data); pendingResolve = null; }
+    } else if (msg.type === 'state') {
+      updateDroneState(msg.data);
+    } else if (msg.type === 'error') {
+      log('error', `Proxy error: ${msg.data}`);
+      if (pendingResolve) { pendingResolve('error'); pendingResolve = null; }
+    } else if (msg.type === 'log') {
+      log(msg.level, msg.data);
+    } else if (msg.type === 'connected') {
+      log('success', `Proxy ready. Tello: ${msg.data.telloIP}:${msg.data.telloPort}`);
+      log('info', 'Sending SDK init command...');
+    }
+  };
+
+  ws.onclose = () => {
+    connected = false;
+    setConnState('disconnected', 'Not Connected');
+    document.getElementById('connStatusVal').textContent = 'disconnected';
+    document.getElementById('connStatusVal').className = 'status-val red';
+    document.getElementById('runBtn').disabled = true;
+    log('warn', 'WebSocket disconnected from proxy.');
+    if (pendingResolve) { pendingResolve('disconnected'); pendingResolve = null; }
+  };
+
+  ws.onerror = (e) => {
+    log('error', 'WebSocket error. Is the proxy running?');
+  };
+}
+
+function setConnState(state, label) {
+  const dot = document.getElementById('connDot');
+  document.getElementById('connLabel').textContent = label;
+  dot.className = 'conn-dot';
+  if (state === 'connected') dot.classList.add('connected');
+  else if (state === 'connecting') dot.classList.add('connecting');
+}
+
+function sendCommand(cmd) {
+  return new Promise((resolve) => {
+    if (!ws || ws.readyState !== WebSocket.OPEN) { resolve('not_connected'); return; }
+    pendingResolve = resolve;
+    ws.send(JSON.stringify({ type: 'command', data: cmd }));
+    log('cmd', `→ ${cmd}`);
+    // Fallback timeout
+    setTimeout(() => { if (pendingResolve) { pendingResolve('timeout'); pendingResolve = null; } }, 15000);
+  });
+}
+
+function updateDroneState(state) {
+  droneState = state;
+  if (state.bat !== undefined) {
+    const bat = Math.round(state.bat);
+    document.getElementById('batVal').textContent = `${bat}%`;
+    document.getElementById('batVal').className = 'status-val ' + (bat > 30 ? 'green' : bat > 15 ? 'amber' : 'red');
+  }
+  if (state.agz !== undefined) document.getElementById('altVal').textContent = `${Math.round(state.agz)} cm`;
+  if (state.vgx !== undefined && state.vgy !== undefined) {
+    const spd = Math.round(Math.sqrt(state.vgx**2 + state.vgy**2 + (state.vgz||0)**2));
+    document.getElementById('speedVal').textContent = `${spd} cm/s`;
+  }
+  if (state.templ !== undefined) document.getElementById('tempVal').textContent = `${Math.round(state.templ)} °C`;
+  if (state.yaw !== undefined) {
+    droneHeading = state.yaw;
+    document.getElementById('headingVal').textContent = `${Math.round(state.yaw)}°`;
+  }
+}
+
+// ══════════════════════════════════════
+// DRAG & DROP — PALETTE
+// ══════════════════════════════════════
+function initDragFromPalette() {
+  document.querySelectorAll('.palette-block').forEach(el => {
+    el.addEventListener('dragstart', e => {
+      e.dataTransfer.setData('block-type', el.dataset.type);
+      e.dataTransfer.effectAllowed = 'copy';
+    });
+  });
+}
+
+function initCanvasDrop() {
+  const canvas = document.getElementById('canvas');
+  canvas.addEventListener('dragover', e => { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; });
+  canvas.addEventListener('drop', e => {
+    e.preventDefault();
+    const type = e.dataTransfer.getData('block-type');
+    const moveId = e.dataTransfer.getData('block-id');
+    if (type) addBlock(type);
+    else if (moveId) {
+      const idx = program.findIndex(b => b.id == moveId);
+      if (idx >= 0) { program.push(...program.splice(idx, 1)); renderBlocks(); }
+    }
+  });
+}
+
+// ══════════════════════════════════════
+// BLOCK MANAGEMENT
+// ══════════════════════════════════════
+function addBlock(type) {
+  const def = BLOCK_DEFS[type];
+  if (!def) return;
+  const params = {};
+  def.params.forEach(p => params[p.key] = p.val);
+  program.push({ id: nextId++, type, params });
+  renderBlocks();
+}
+
+function renderBlocks() {
+  const list = document.getElementById('blockList');
+  document.getElementById('emptyMsg').style.display = program.length ? 'none' : 'block';
+  list.innerHTML = '';
+
+  program.forEach((block, idx) => {
+    const def = BLOCK_DEFS[block.type];
+    const el = document.createElement('div');
+    el.className = 'prog-block';
+    el.dataset.id = block.id;
+    el.draggable = true;
+
+    el.addEventListener('dragstart', e => {
+      e.dataTransfer.setData('block-id', block.id);
+      e.dataTransfer.effectAllowed = 'move';
+      setTimeout(() => el.classList.add('dragging'), 0);
+    });
+    el.addEventListener('dragend', () => el.classList.remove('dragging'));
+    el.addEventListener('dragover', e => { e.preventDefault(); el.style.borderTop = '2px solid var(--accent)'; });
+    el.addEventListener('dragleave', () => el.style.borderTop = '');
+    el.addEventListener('drop', e => {
+      e.preventDefault(); el.style.borderTop = '';
+      const moveId = e.dataTransfer.getData('block-id');
+      const btype = e.dataTransfer.getData('block-type');
+      if (btype) { addBlock(btype); return; }
+      if (moveId && moveId != block.id) {
+        const from = program.findIndex(b => b.id == moveId);
+        const to = program.findIndex(b => b.id == block.id);
+        if (from >= 0 && to >= 0) { const [m] = program.splice(from,1); program.splice(to,0,m); renderBlocks(); }
+      }
+    });
+
+    let paramsHtml = '';
+    def.params.forEach(p => {
+      paramsHtml += `<div class="param-group">
+        <span class="param-label">${p.label}</span>
+        <input class="param-input" type="number" value="${block.params[p.key]}"
+          min="${p.min}" max="${p.max}" onchange="updateParam(${block.id},'${p.key}',this.value)">
+        <span class="param-unit">${p.unit}</span>
+      </div>`;
+    });
+
+    el.innerHTML = `
+      <span class="block-num">${idx+1}</span>
+      <div class="block-stripe" style="background:${def.stripe}"></div>
+      <div class="block-content">
+        <div class="block-title" style="color:${def.color}">${def.icon} ${def.label}</div>
+        ${paramsHtml ? `<div class="block-params">${paramsHtml}</div>` : ''}
+      </div>
+      <button class="block-delete" onclick="deleteBlock(${block.id})" title="Remove">✕</button>`;
+    list.appendChild(el);
+  });
+
+  document.getElementById('blockCount').textContent = `${program.length} block${program.length!==1?'s':''}`;
+  document.getElementById('estTime').textContent = `~${estimateFlightTime()}s`;
+  document.getElementById('runBtn').disabled = program.length === 0 || !connected;
+  updateCodePreview();
+  drawFlightPreview();
+}
+
+function updateParam(id, key, val) {
+  const b = program.find(b => b.id === id);
+  if (b) { b.params[key] = parseFloat(val) || 0; updateCodePreview(); drawFlightPreview(); }
+}
+
+function deleteBlock(id) { program = program.filter(b => b.id !== id); renderBlocks(); }
+function clearProgram() { if (!program.length) return; program = []; renderBlocks(); log('info','Program cleared.'); }
+
+function estimateFlightTime() {
+  let t = 0;
+  program.forEach(b => {
+    if (['takeoff','land'].includes(b.type)) t += 3;
+    else if (b.type === 'returnhome') t += 5;
+    else if (b.type === 'hover') t += (b.params.t||2);
+    else if (b.type === 'moveto') t += 3;
+    else t += Math.ceil((b.params.d||50)/30);
+  });
+  return t;
+}
+
+// ══════════════════════════════════════
+// RUN PROGRAM
+// ══════════════════════════════════════
+async function runProgram() {
+  if (!connected || running || !program.length) return;
+  running = true;
+  document.getElementById('runBtn').disabled = true;
+  document.getElementById('runBtn').textContent = '⏸ Running...';
+  switchTab('status', document.querySelectorAll('.panel-tab')[1]);
+
+  let homeX = 0, homeY = 0, curX = 0, curY = 0, curZ = 0;
+
+  log('success', '▶ Mission started!');
+
+  for (let i = 0; i < program.length; i++) {
+    const block = program[i];
+    const def = BLOCK_DEFS[block.type];
+    const el = document.querySelector(`[data-id="${block.id}"]`);
+    if (el) { el.classList.add('executing'); el.classList.remove('done','error'); }
+
+    const pct = Math.round((i / program.length) * 100);
+    document.getElementById('progressBar').style.width = pct + '%';
+    document.getElementById('progressLabel').textContent = `${i+1}/${program.length}`;
+
+    // Build SDK command
+    let cmd = '';
+    if (block.type === 'takeoff') cmd = 'takeoff';
+    else if (block.type === 'land') cmd = 'land';
+    else if (block.type === 'returnhome') {
+      // fly back to home position first, then land
+      const dx = homeX - curX, dy = homeY - curY;
+      if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
+        const dist = Math.round(Math.sqrt(dx*dx + dy*dy));
+        if (dist >= 20) await sendCommand(`go ${Math.round(dx)} ${Math.round(dy)} 0 30`);
+      }
+      cmd = 'land';
+    }
+    else if (block.type === 'moveto') { const {x,y,z} = block.params; cmd = `go ${x} ${y} ${z} 50`; }
+    else if (block.type === 'forward') cmd = `forward ${block.params.d}`;
+    else if (block.type === 'back')    cmd = `back ${block.params.d}`;
+    else if (block.type === 'left')    cmd = `left ${block.params.d}`;
+    else if (block.type === 'right')   cmd = `right ${block.params.d}`;
+    else if (block.type === 'up')      cmd = `up ${block.params.d}`;
+    else if (block.type === 'down')    cmd = `down ${block.params.d}`;
+    else if (block.type === 'cw')      cmd = `cw ${block.params.deg}`;
+    else if (block.type === 'ccw')     cmd = `ccw ${block.params.deg}`;
+    else if (block.type === 'hover') {
+      // Hover: just wait, no movement command needed (drone holds position)
+      log('info', `[${i+1}/${program.length}] ⏸ Hovering for ${block.params.t}s...`);
+      await sleep(block.params.t * 1000);
+      if (el) { el.classList.remove('executing'); el.classList.add('done'); }
+      continue;
+    }
+
+    log('info', `[${i+1}/${program.length}] ${def.icon} ${def.label}`);
+    const resp = await sendCommand(cmd);
+
+    if (resp === 'error' || resp === 'not_connected') {
+      log('error', `✕ Command failed: ${resp}`);
+      if (el) { el.classList.remove('executing'); el.classList.add('error'); }
+      log('error', 'Mission aborted. Check proxy connection.');
+      break;
+    } else {
+      log('success', `  ✓ ${resp}`);
+      if (el) { el.classList.remove('executing'); el.classList.add('done'); }
+    }
+
+    // Update simulated position
+    updateSimPosition(block, curX, curY, curZ);
+  }
+
+  document.getElementById('progressBar').style.width = '100%';
+  document.getElementById('progressLabel').textContent = 'Done';
+  log('success', '✅ Mission complete!');
+
+  setTimeout(() => {
+    document.querySelectorAll('.prog-block').forEach(e => e.classList.remove('done','error'));
+    document.getElementById('progressBar').style.width = '0';
+    document.getElementById('progressLabel').textContent = '—';
+  }, 4000);
+
+  running = false;
+  document.getElementById('runBtn').disabled = false;
+  document.getElementById('runBtn').textContent = '▶ Run Mission';
+}
+
+function updateSimPosition(block, x, y, z) {
+  const p = block.params;
+  if (block.type === 'moveto') { x += p.x; y += p.y; z = p.z; }
+  else if (block.type === 'forward') y -= p.d;
+  else if (block.type === 'back') y += p.d;
+  else if (block.type === 'left') x -= p.d;
+  else if (block.type === 'right') x += p.d;
+  else if (block.type === 'up') z += p.d;
+  else if (block.type === 'down') z = Math.max(0, z - p.d);
+  document.getElementById('posVal').textContent = `${Math.round(x)}, ${Math.round(y)}, ${Math.round(z)} cm`;
+}
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+// ══════════════════════════════════════
+// FLIGHT PREVIEW CANVAS
+// ══════════════════════════════════════
+function drawFlightPreview() {
+  const canvas = document.getElementById('flightCanvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const W = canvas.offsetWidth || 248, H = canvas.offsetHeight || 248;
+  canvas.width = W; canvas.height = H;
+  ctx.clearRect(0, 0, W, H);
+
+  ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+  ctx.lineWidth = 0.5;
+  for (let x=0;x<=W;x+=20){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}
+  for (let y=0;y<=H;y+=20){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
+
+  let cx=0,cy=0,cz=0,ch=0;
+  const pts = [{x:0,y:0,z:0,type:'start'}];
+  let homeX=0,homeY=0;
+
+  program.forEach(b => {
+    const p = b.params;
+    switch(b.type){
+      case 'takeoff': cz=80; pts.push({x:cx,y:cy,z:cz,type:'takeoff'}); break;
+      case 'land': cz=0; pts.push({x:cx,y:cy,z:cz,type:'land'}); break;
+      case 'returnhome': cx=homeX;cy=homeY;cz=0; pts.push({x:cx,y:cy,z:cz,type:'land'}); break;
+      case 'moveto': cx+=p.x;cy+=p.y;cz=Math.max(0,p.z); pts.push({x:cx,y:cy,z:cz,type:'move'}); break;
+      case 'forward': cy-=p.d*Math.cos(ch*Math.PI/180);cx+=p.d*Math.sin(ch*Math.PI/180); pts.push({x:cx,y:cy,z:cz,type:'move'}); break;
+      case 'back': cy+=p.d*Math.cos(ch*Math.PI/180);cx-=p.d*Math.sin(ch*Math.PI/180); pts.push({x:cx,y:cy,z:cz,type:'move'}); break;
+      case 'left': cx-=p.d; pts.push({x:cx,y:cy,z:cz,type:'move'}); break;
+      case 'right': cx+=p.d; pts.push({x:cx,y:cy,z:cz,type:'move'}); break;
+      case 'up': cz+=p.d; pts.push({x:cx,y:cy,z:cz,type:'move'}); break;
+      case 'down': cz=Math.max(0,cz-p.d); pts.push({x:cx,y:cy,z:cz,type:'move'}); break;
+      case 'cw': ch=(ch+p.deg)%360; break;
+      case 'ccw': ch=(ch-p.deg+360)%360; break;
+    }
+  });
+
+  const sx=W/2,sy=H/2;
+  if (pts.length < 2) {
+    ctx.beginPath();ctx.arc(sx,sy,8,0,Math.PI*2);ctx.fillStyle='rgba(0,229,160,0.15)';ctx.fill();
+    ctx.beginPath();ctx.arc(sx,sy,4,0,Math.PI*2);ctx.fillStyle='#00e5a0';ctx.fill();
+    return;
+  }
+
+  const allX=pts.map(p=>p.x),allY=pts.map(p=>p.y);
+  const minX=Math.min(...allX),maxX=Math.max(...allX),minY=Math.min(...allY),maxY=Math.max(...allY);
+  const scale=Math.min((W-60)/Math.max(maxX-minX,100),(H-60)/Math.max(maxY-minY,100))*0.85;
+  const offX=W/2-(minX+maxX)/2*scale, offY=H/2-(minY+maxY)/2*scale;
+  const tx=x=>x*scale+offX, ty=y=>y*scale+offY;
+
+  ctx.beginPath();ctx.moveTo(tx(pts[0].x),ty(pts[0].y));
+  for(let i=1;i<pts.length;i++) ctx.lineTo(tx(pts[i].x),ty(pts[i].y));
+  ctx.strokeStyle='rgba(0,229,160,0.55)';ctx.lineWidth=2;ctx.setLineDash([6,4]);ctx.stroke();ctx.setLineDash([]);
+
+  pts.forEach((p,i)=>{
+    const px=tx(p.x),py=ty(p.y);
+    if(i===0){
+      ctx.beginPath();ctx.arc(px,py,10,0,Math.PI*2);ctx.fillStyle='rgba(0,229,160,0.15)';ctx.fill();
+      ctx.beginPath();ctx.arc(px,py,4,0,Math.PI*2);ctx.fillStyle='#00e5a0';ctx.fill();
+    } else if(i===pts.length-1){
+      ctx.beginPath();ctx.arc(px,py,5,0,Math.PI*2);
+      ctx.fillStyle=p.type==='land'?'#ff4f4f':'#4fa3ff';ctx.fill();
+    } else {
+      ctx.beginPath();ctx.arc(px,py,3,0,Math.PI*2);ctx.fillStyle='rgba(79,163,255,0.7)';ctx.fill();
+    }
+  });
+
+  const last=pts[pts.length-1];
+  document.getElementById('posVal').textContent=`${Math.round(last.x)}, ${Math.round(last.y)}, ${Math.round(last.z)} cm`;
+  document.getElementById('altVal').textContent=`${Math.round(last.z)} cm`;
+  document.getElementById('headingVal').textContent=`${Math.round(ch)}°`;
+}
+
+// ══════════════════════════════════════
+// SDK CODE
+// ══════════════════════════════════════
+function updateCodePreview() {
+  const lines=['# Tello SDK 2.0 — DroneCode export',''];
+  lines.push('command   # enter SDK mode');
+  program.forEach(b=>{
+    switch(b.type){
+      case 'takeoff': lines.push('takeoff'); break;
+      case 'land': lines.push('land'); break;
+      case 'returnhome': lines.push('# return to home\nland'); break;
+      case 'moveto': lines.push(`go ${b.params.x} ${b.params.y} ${b.params.z} 50`); break;
+      case 'forward': lines.push(`forward ${b.params.d}`); break;
+      case 'back': lines.push(`back ${b.params.d}`); break;
+      case 'left': lines.push(`left ${b.params.d}`); break;
+      case 'right': lines.push(`right ${b.params.d}`); break;
+      case 'up': lines.push(`up ${b.params.d}`); break;
+      case 'down': lines.push(`down ${b.params.d}`); break;
+      case 'cw': lines.push(`cw ${b.params.deg}`); break;
+      case 'ccw': lines.push(`ccw ${b.params.deg}`); break;
+      case 'hover': lines.push(`# hover ${b.params.t}s\nstop`); break;
+    }
+  });
+  document.getElementById('codeOutput').textContent=lines.join('\n');
+}
+
+function copyCode() {
+  navigator.clipboard.writeText(document.getElementById('codeOutput').textContent);
+  const btn = document.getElementById('copyBtn');
+  btn.textContent = 'copied!';
+  setTimeout(()=>btn.textContent='copy', 1500);
+}
+
+// ══════════════════════════════════════
+// LOG
+// ══════════════════════════════════════
+function log(type,msg) {
+  const area=document.getElementById('logArea');
+  const now=new Date();
+  const t=`${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}:${now.getSeconds().toString().padStart(2,'0')}`;
+  const line=document.createElement('div');
+  line.className=`log-line ${type}`;
+  line.innerHTML=`<span class="log-time">${t}</span>${msg}`;
+  area.appendChild(line);
+  area.scrollTop=area.scrollHeight;
+}
+function clearLog(){document.getElementById('logArea').innerHTML='';}
+
+// ══════════════════════════════════════
+// TABS
+// ══════════════════════════════════════
+function switchTab(tab,el) {
+  document.querySelectorAll('.panel-tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  ['preview','status','code'].forEach(t=>{
+    document.getElementById('tab-'+t).style.display=t===tab?'block':'none';
+  });
+  if(tab==='code') updateCodePreview();
+}
+
+window.addEventListener('resize',drawFlightPreview);
+setTimeout(drawFlightPreview,100);
+</script>
+</body>
+</html>

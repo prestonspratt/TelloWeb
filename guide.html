@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DroneCode — Deployment Guide</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0f14; --surface: #161920; --surface2: #1e222d; --surface3: #252a38;
+    --border: rgba(255,255,255,0.07); --border2: rgba(255,255,255,0.13);
+    --accent: #00e5a0; --red: #ff4f4f; --blue: #4fa3ff; --amber: #ffb84f;
+    --text: #e8ecf5; --text2: #8a92a8; --text3: #545c72;
+    --mono: 'Space Mono', monospace; --sans: 'DM Sans', sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: var(--sans); line-height: 1.7; }
+  .wrap { max-width: 760px; margin: 0 auto; padding: 40px 24px 80px; }
+  h1 { font-size: 28px; font-weight: 600; margin-bottom: 6px; display: flex; align-items: center; gap: 12px; }
+  .subtitle { color: var(--text2); font-size: 14px; margin-bottom: 40px; }
+
+  .phase { margin-bottom: 48px; }
+  .phase-header { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 1px solid var(--border2); }
+  .phase-num { width: 32px; height: 32px; border-radius: 50%; background: var(--accent); color: #000; font-family: var(--mono); font-size: 14px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .phase-title { font-size: 18px; font-weight: 600; }
+  .phase-desc { font-size: 13px; color: var(--text2); }
+
+  .step { display: flex; gap: 16px; margin-bottom: 20px; }
+  .step-num { font-family: var(--mono); font-size: 12px; color: var(--text3); padding-top: 3px; min-width: 24px; }
+  .step-body { flex: 1; }
+  .step-body h3 { font-size: 14px; font-weight: 600; margin-bottom: 6px; }
+  .step-body p { font-size: 13px; color: var(--text2); margin-bottom: 8px; }
+
+  code { background: var(--surface2); border: 1px solid var(--border2); border-radius: 4px; padding: 1px 7px; font-family: var(--mono); font-size: 12px; color: var(--accent); }
+  pre { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; font-family: var(--mono); font-size: 12px; color: var(--text2); overflow-x: auto; margin: 10px 0; line-height: 1.8; }
+  pre .c { color: var(--text3); }
+  pre .k { color: var(--blue); }
+  pre .s { color: var(--accent); }
+
+  .alert { border-radius: 8px; padding: 12px 14px; font-size: 13px; margin: 12px 0; display: flex; gap: 10px; line-height: 1.6; }
+  .alert-amber { background: rgba(255,184,79,0.1); border: 1px solid rgba(255,184,79,0.25); color: var(--amber); }
+  .alert-green { background: rgba(0,229,160,0.1); border: 1px solid rgba(0,229,160,0.25); color: var(--accent); }
+  .alert-blue { background: rgba(79,163,255,0.1); border: 1px solid rgba(79,163,255,0.25); color: var(--blue); }
+  .alert-red { background: rgba(255,79,79,0.1); border: 1px solid rgba(255,79,79,0.25); color: var(--red); }
+  .alert-icon { flex-shrink: 0; font-size: 16px; margin-top: 1px; }
+
+  .file-tree { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 16px; font-family: var(--mono); font-size: 12px; line-height: 2; }
+  .tree-dir { color: var(--blue); }
+  .tree-file { color: var(--text2); }
+  .tree-note { color: var(--text3); }
+  .tree-arrow { color: var(--accent); }
+
+  .pill { display: inline-flex; align-items: center; gap: 5px; padding: 2px 10px; border-radius: 12px; font-size: 11px; font-family: var(--mono); background: var(--surface2); border: 1px solid var(--border2); color: var(--text2); margin: 2px; }
+  .pill.green { background: rgba(0,229,160,0.1); border-color: rgba(0,229,160,0.3); color: var(--accent); }
+  .pill.blue { background: rgba(79,163,255,0.1); border-color: rgba(79,163,255,0.3); color: var(--blue); }
+
+  .divider { height: 1px; background: var(--border); margin: 32px 0; }
+  strong { color: var(--text); font-weight: 500; }
+  a { color: var(--blue); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  .arch-diagram { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 24px; margin: 16px 0; display: flex; align-items: center; justify-content: center; gap: 0; flex-wrap: wrap; }
+  .arch-box { background: var(--surface3); border: 1px solid var(--border2); border-radius: 6px; padding: 10px 14px; text-align: center; font-size: 12px; }
+  .arch-box .label { font-family: var(--mono); color: var(--text3); font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 4px; }
+  .arch-box .name { font-weight: 600; font-size: 13px; }
+  .arch-arrow { font-family: var(--mono); color: var(--text3); font-size: 11px; padding: 0 10px; text-align: center; }
+  .arch-arrow .proto { color: var(--accent); display: block; font-size: 10px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>🚁 DroneCode Deployment Guide</h1>
+  <p class="subtitle">How to upload the DroneCode app to your IONOS website and run the local proxy.</p>
+
+  <!-- ARCHITECTURE -->
+  <div style="margin-bottom:40px;">
+    <p style="font-size:13px;color:var(--text2);margin-bottom:14px;">Here's how all the pieces connect when you fly:</p>
+    <div class="arch-diagram">
+      <div class="arch-box"><div class="label">Your Browser</div><div class="name">DroneCode UI</div></div>
+      <div class="arch-arrow"><span class="proto">WebSocket</span>ws://localhost:8080</div>
+      <div class="arch-box"><div class="label">Your Computer</div><div class="name">proxy.js</div></div>
+      <div class="arch-arrow"><span class="proto">UDP</span>192.168.10.1:8889</div>
+      <div class="arch-box"><div class="label">WiFi</div><div class="name">Tello Drone</div></div>
+    </div>
+    <p style="font-size:12px;color:var(--text3);margin-top:8px;">The UI lives on your IONOS server. The proxy runs locally on your laptop while flying.</p>
+  </div>
+
+  <!-- PHASE 1: FILE STRUCTURE -->
+  <div class="phase">
+    <div class="phase-header">
+      <div class="phase-num">1</div>
+      <div>
+        <div class="phase-title">Understand the file structure</div>
+        <div class="phase-desc">What you downloaded and where each piece goes</div>
+      </div>
+    </div>
+
+    <p style="font-size:13px;color:var(--text2);margin-bottom:14px;">Your download contains two parts: the <strong>web app</strong> (goes to IONOS) and the <strong>proxy server</strong> (runs on your laptop when flying).</p>
+
+    <div class="file-tree">
+      <span class="tree-dir">dronecode/</span><br>
+      &nbsp;&nbsp;<span class="tree-dir">public/</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tree-note">← upload this folder to IONOS</span><br>
+      &nbsp;&nbsp;&nbsp;&nbsp;<span class="tree-file">index.html</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tree-note">← the DroneCode web app</span><br>
+      &nbsp;&nbsp;<span class="tree-dir">server/</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tree-note">← keep on your laptop</span><br>
+      &nbsp;&nbsp;&nbsp;&nbsp;<span class="tree-file">proxy.js</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tree-note">← the WebSocket↔UDP bridge</span><br>
+      &nbsp;&nbsp;&nbsp;&nbsp;<span class="tree-file">package.json</span><br>
+      &nbsp;&nbsp;&nbsp;&nbsp;<span class="tree-file">start-windows.bat</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tree-note">← double-click on Windows</span><br>
+      &nbsp;&nbsp;&nbsp;&nbsp;<span class="tree-file">start-mac-linux.sh</span> &nbsp;&nbsp;&nbsp;&nbsp;<span class="tree-note">← run on Mac/Linux</span>
+    </div>
+  </div>
+
+  <!-- PHASE 2: IONOS UPLOAD -->
+  <div class="phase">
+    <div class="phase-header">
+      <div class="phase-num">2</div>
+      <div>
+        <div class="phase-title">Upload to IONOS via FTP</div>
+        <div class="phase-desc">Using FileZilla (free) — takes about 5 minutes</div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">2.1</div>
+      <div class="step-body">
+        <h3>Get your IONOS FTP credentials</h3>
+        <p>Log in to your IONOS account at <a href="https://my.ionos.com" target="_blank">my.ionos.com</a>. Go to <strong>Hosting → Webspace</strong>, then click your hosting package. Find the <strong>FTP</strong> section. Note down:</p>
+        <pre><span class="c"># You'll need these three things:</span>
+FTP Server:  ftp.your-domain.com  <span class="c">(shown in IONOS panel)</span>
+Username:    your-ftp-username
+Password:    your-ftp-password</pre>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">2.2</div>
+      <div class="step-body">
+        <h3>Download and install FileZilla</h3>
+        <p>Download the free FileZilla Client from <a href="https://filezilla-project.org" target="_blank">filezilla-project.org</a> and install it. (Client only — not the Server edition.)</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">2.3</div>
+      <div class="step-body">
+        <h3>Connect FileZilla to IONOS</h3>
+        <p>Open FileZilla. In the top bar, fill in:</p>
+        <pre>Host:      ftp.your-domain.com
+Username:  your-ftp-username
+Password:  your-ftp-password
+Port:      21</pre>
+        <p>Click <strong>Quickconnect</strong>. You'll see your server files appear on the right side.</p>
+        <div class="alert alert-amber"><span class="alert-icon">⚠️</span><span>If connection fails, try port <code>22</code> (SFTP) instead of <code>21</code>. In IONOS this may require enabling SFTP in your hosting panel first.</span></div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">2.4</div>
+      <div class="step-body">
+        <h3>Navigate to your web root</h3>
+        <p>On the right panel in FileZilla (the server side), navigate to your web root folder. For IONOS this is typically:</p>
+        <pre>/htdocs/         <span class="c">← most common for IONOS shared hosting</span>
+/public_html/    <span class="c">← alternative name</span>
+/www/            <span class="c">← less common</span></pre>
+        <p>If you see existing files like <code>index.php</code> or a <code>Welcome</code> page, you're in the right place.</p>
+        <div class="alert alert-blue"><span class="alert-icon">💡</span><span>You can put DroneCode in a subfolder like <code>/htdocs/dronecode/</code> so it lives at <strong>yourdomain.com/dronecode/</strong> — this avoids replacing your existing site.</span></div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">2.5</div>
+      <div class="step-body">
+        <h3>Upload index.html</h3>
+        <p>On the left panel (your computer), navigate to the <code>dronecode/public/</code> folder. Drag <code>index.html</code> from the left panel to the right panel (server). FileZilla will upload it.</p>
+        <div class="alert alert-green"><span class="alert-icon">✅</span><span>Once uploaded, visit your domain in a browser. You should see the DroneCode interface! If you put it in a subfolder, visit <code>yourdomain.com/dronecode/</code></span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PHASE 3: PROXY SETUP -->
+  <div class="phase">
+    <div class="phase-header">
+      <div class="phase-num">3</div>
+      <div>
+        <div class="phase-title">Set up the local proxy</div>
+        <div class="phase-desc">This runs on your laptop each time you fly — one-time setup</div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">3.1</div>
+      <div class="step-body">
+        <h3>Install Node.js</h3>
+        <p>Download and install Node.js from <a href="https://nodejs.org" target="_blank">nodejs.org</a>. Choose the <strong>LTS</strong> version. This is a one-time install.</p>
+        <p>Verify it worked by opening a Terminal (Mac) or Command Prompt (Windows) and typing:</p>
+        <pre>node --version    <span class="c"># should show v18.x.x or higher</span>
+npm --version     <span class="c"># should show 9.x.x or higher</span></pre>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">3.2</div>
+      <div class="step-body">
+        <h3>Install proxy dependencies</h3>
+        <p>Open Terminal/Command Prompt. Navigate to the <code>server/</code> folder:</p>
+        <pre><span class="c"># Mac/Linux:</span>
+cd ~/Downloads/dronecode/server
+./start-mac-linux.sh    <span class="c"># this installs and starts in one step</span>
+
+<span class="c"># Windows:</span>
+cd C:\Users\YourName\Downloads\dronecode\server
+start-windows.bat       <span class="c"># double-click works too</span></pre>
+        <p>The first run will install the <code>ws</code> package automatically, then start the proxy.</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">3.3</div>
+      <div class="step-body">
+        <h3>What a successful proxy start looks like</h3>
+        <pre>╔══════════════════════════════════════════╗
+║        DroneCode WebSocket Proxy         ║
+╚══════════════════════════════════════════╝
+
+[UDP] Listening for Tello responses on port 9000
+[UDP] Listening for Tello state on port 8890
+[WS]  WebSocket server running on ws://localhost:8080
+[WS]  Open DroneCode in your browser and connect.
+
+  Make sure your computer WiFi is connected to TELLO-XXXXXX
+  Tello target: 192.168.10.1:8889</pre>
+        <div class="alert alert-green"><span class="alert-icon">✅</span><span>Keep this terminal window open while flying. Press <code>Ctrl+C</code> to stop the proxy when done.</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PHASE 4: FLY -->
+  <div class="phase">
+    <div class="phase-header">
+      <div class="phase-num">4</div>
+      <div>
+        <div class="phase-title">Fly your first mission</div>
+        <div class="phase-desc">Every time you want to fly, follow these steps in order</div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">4.1</div>
+      <div class="step-body">
+        <h3>Power on the Tello</h3>
+        <p>Press the power button. Wait for the indicator LED to blink <strong>yellow rapidly</strong> — this means it's in WiFi hotspot mode and ready.</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">4.2</div>
+      <div class="step-body">
+        <h3>Connect your laptop to Tello WiFi</h3>
+        <p>In your WiFi settings, connect to the network named <code>TELLO-XXXXXX</code> (the X's are unique to your drone).</p>
+        <div class="alert alert-amber"><span class="alert-icon">⚠️</span><span>Your laptop will lose internet access while on Tello WiFi — this is normal. The drone has its own network. You can still use your website since it's already loaded in the browser.</span></div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">4.3</div>
+      <div class="step-body">
+        <h3>Start the proxy</h3>
+        <p>Run <code>start-windows.bat</code> or <code>./start-mac-linux.sh</code>. Wait for it to say "WebSocket server running".</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">4.4</div>
+      <div class="step-body">
+        <h3>Open DroneCode and connect</h3>
+        <p>Visit your IONOS-hosted page (e.g. <code>yourdomain.com</code>). Click the <strong>"Not Connected"</strong> pill in the top-right. The proxy address defaults to <code>localhost:8080</code> — click <strong>Connect</strong>.</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">4.5</div>
+      <div class="step-body">
+        <h3>Build and run your mission</h3>
+        <p>Drag blocks to build your mission. A basic takeoff-and-return looks like this:</p>
+        <pre><span class="s">🛫 Takeoff</span>
+<span class="s">⬆️ Forward</span>   100 cm
+<span class="s">⬆️ Up</span>        50 cm
+<span class="s">🏠 Return &amp; Land</span></pre>
+        <p>Click <strong>▶ Run Mission</strong>. The drone will execute each block in sequence. Watch the Console tab for live command responses from the Tello.</p>
+        <div class="alert alert-red"><span class="alert-icon">🚨</span><span><strong>Safety:</strong> Always fly in a large open area. Keep hands clear of propellers. Have the Tello app on your phone as a backup emergency stop. Keep the drone in visual range at all times.</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PHASE 5: TROUBLESHOOTING -->
+  <div class="phase">
+    <div class="phase-header">
+      <div class="phase-num">5</div>
+      <div>
+        <div class="phase-title">Troubleshooting</div>
+        <div class="phase-desc">Common issues and fixes</div>
+      </div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:12px;">
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:14px;">
+        <p style="font-weight:600;font-size:13px;margin-bottom:6px;">❌ "WebSocket error. Is the proxy running?"</p>
+        <p style="font-size:12px;color:var(--text2);">The browser can't reach the proxy. Make sure: (1) the proxy terminal is open and shows "WebSocket server running", (2) you're using <code>localhost:8080</code> in the connect dialog, (3) no firewall is blocking port 8080.</p>
+      </div>
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:14px;">
+        <p style="font-weight:600;font-size:13px;margin-bottom:6px;">❌ Proxy starts but drone doesn't respond</p>
+        <p style="font-size:12px;color:var(--text2);">Make sure your laptop is connected to the <strong>TELLO-XXXXXX</strong> WiFi network, not your home WiFi. The Tello's IP is always <code>192.168.10.1</code> on its own network.</p>
+      </div>
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:14px;">
+        <p style="font-weight:600;font-size:13px;margin-bottom:6px;">❌ "Port 8080 is already in use"</p>
+        <p style="font-size:12px;color:var(--text2);">Another app is using port 8080. Open <code>proxy.js</code> in a text editor, find <code>const WS_PORT = 8080</code> on line 1, change it to <code>8081</code>. Also update the port in the DroneCode connect dialog.</p>
+      </div>
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:14px;">
+        <p style="font-weight:600;font-size:13px;margin-bottom:6px;">❌ Commands send but drone doesn't move</p>
+        <p style="font-size:12px;color:var(--text2);">The drone may be in an error state. Land it, power cycle it, reconnect to its WiFi, restart the proxy, and try again. Check that the battery is above 20%.</p>
+      </div>
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:14px;">
+        <p style="font-weight:600;font-size:13px;margin-bottom:6px;">❌ IONOS page shows "403 Forbidden"</p>
+        <p style="font-size:12px;color:var(--text2);">The file was uploaded to the wrong directory, or file permissions are wrong. In FileZilla, right-click <code>index.html</code> on the server → File Permissions → set to <code>644</code>.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+  <p style="font-size:12px;color:var(--text3);text-align:center;">DroneCode — Built with DroneBlocks SDK 2.0 compatibility &nbsp;·&nbsp; Tello EDU &amp; standard Tello supported</p>
+
+</div>
+</body>
+</html>
