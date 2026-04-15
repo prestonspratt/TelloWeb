@@ -1,0 +1,16 @@
+{
+  "name": "dronecode-proxy",
+  "version": "1.0.0",
+  "description": "WebSocket-to-UDP proxy for Tello drone control",
+  "main": "proxy.js",
+  "scripts": {
+    "start": "node proxy.js",
+    "dev": "node --watch proxy.js"
+  },
+  "dependencies": {
+    "ws": "^8.16.0"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  }
+}
